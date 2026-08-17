@@ -28,7 +28,7 @@ import AbcRoundedIcon from '@mui/icons-material/AbcRounded';
 import { useState } from 'react';
 
 import { useDiff } from '../../hooks';
-import { DIFF_TYPES, VIEW_MODES } from '../../core/constants';
+import { DIFF_TYPES, VIEW_MODES, MODIFIER_KEY } from '../../core/constants';
 
 export function DiffToolbar() {
   const {
@@ -189,7 +189,7 @@ export function DiffToolbar() {
               height: 32,
             }}
           >
-            <Tooltip title="Previous difference (Alt+P / Alt+Up)">
+            <Tooltip title={`Previous difference (${MODIFIER_KEY}+P / ${MODIFIER_KEY}+Up)`}>
               <span>
                 <IconButton
                   size="small"
@@ -215,7 +215,7 @@ export function DiffToolbar() {
               {currentChangeIndex > 0 ? `${currentChangeIndex} of ${totalChanges}` : `${totalChanges} diffs`}
             </Typography>
 
-            <Tooltip title="Next difference (Alt+N / Alt+Down)">
+            <Tooltip title={`Next difference (${MODIFIER_KEY}+N / ${MODIFIER_KEY}+Down)`}>
               <span>
                 <IconButton
                   size="small"

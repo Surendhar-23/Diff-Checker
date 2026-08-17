@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -8,24 +9,29 @@ import {
   Typography,
   Paper,
   IconButton,
+  Chip,
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import KeyboardRoundedIcon from '@mui/icons-material/KeyboardRounded';
-
-const SHORTCUT_LIST = [
-  { keyCombo: ['Alt', 'N'], desc: 'Jump to Next Difference' },
-  { keyCombo: ['Alt', 'P'], desc: 'Jump to Previous Difference' },
-  { keyCombo: ['Alt', 'S'], desc: 'Swap Left & Right Texts' },
-  { keyCombo: ['Alt', '1'], desc: 'Switch to Split (Side-by-Side) View' },
-  { keyCombo: ['Alt', '2'], desc: 'Switch to Unified (Inline) View' },
-  { keyCombo: ['Alt', '3'], desc: 'Switch to Raw Text Editor' },
-  { keyCombo: ['Alt', 'F'], desc: 'Focus In-Diff Search' },
-  { keyCombo: ['Tab'], desc: 'Insert Indent Spaces in Editor' },
-  { keyCombo: ['?'], desc: 'Open Keyboard Shortcuts Guide' },
-  { keyCombo: ['Esc'], desc: 'Close open dialogs or clear search' },
-];
+import { isMacPlatform } from '../../core/constants';
 
 export function ShortcutsDialog({ open, onClose }) {
+  const isMac = useMemo(() => isMacPlatform(), []);
+  const modKey = isMac ? '⌥' : 'Alt';
+
+  const shortcutList = useMemo(() => [
+    { keyCombo: [modKey, 'N'], desc: 'Jump to Next Difference' },
+    { keyCombo: [modKey, 'P'], desc: 'Jump to Previous Difference' },
+    { keyCombo: [modKey, 'S'], desc: 'Swap Left & Right Texts' },
+    { keyCombo: [modKey, '1'], desc: 'Switch to Split (Side-by-Side) View' },
+    { keyCombo: [modKey, '2'], desc: 'Switch to Unified (Inline) View' },
+    { keyCombo: [modKey, '3'], desc: 'Switch to Raw Text Editor' },
+    { keyCombo: [modKey, 'F'], desc: 'Focus In-Diff Search' },
+    { keyCombo: [isMac ? '⌘' : 'Ctrl', 'Shift', 'F'], desc: 'Quick Search Diff' },
+    { keyCombo: ['Tab'], desc: 'Insert Indent Spaces in Editor' },
+    { keyCombo: ['?'], desc: 'Open Keyboard Shortcuts Guide' },
+    { keyCombo: ['Esc'], desc: 'Close open dialogs or clear search' },
+  ], [isMac, modKey]);
   return (
     <Dialog
       open={open}
@@ -53,6 +59,13 @@ export function ShortcutsDialog({ open, onClose }) {
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
             Keyboard Shortcuts
           </Typography>
+          <Chip
+            label={isMac ? 'macOS (⌥ Option)' : 'Windows / Linux (Alt)'}
+            size="small"
+            color="primary"
+            variant="outlined"
+            sx={{ height: 22, fontSize: '0.68rem', fontWeight: 600, ml: 0.5 }}
+          />
         </Box>
         <IconButton size="small" onClick={onClose}>
           <CloseRoundedIcon fontSize="small" />
@@ -65,7 +78,7 @@ export function ShortcutsDialog({ open, onClose }) {
         </Typography>
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>
-          {SHORTCUT_LIST.map((item, idx) => (
+          {shortcutList.map((item, idx) => (
             <Paper
               key={idx}
               elevation={0}

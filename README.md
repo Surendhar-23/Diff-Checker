@@ -53,17 +53,18 @@ Navigate through each change hunk effortlessly with `< Prev` / `Next >` buttons 
 
 ## ⌨️ Power-User Keyboard Shortcuts
 
-| Shortcut | Action |
-| :--- | :--- |
-| **`Alt + N`** or **`Alt + ↓`** | Jump to Next difference |
-| **`Alt + P`** or **`Alt + ↑`** | Jump to Previous difference |
-| **`Alt + S`** | Swap left and right texts |
-| **`Alt + 1`** | Switch to Side-by-Side (Split) View |
-| **`Alt + 2`** | Switch to Unified (Inline) View |
-| **`Alt + 3`** | Switch to Live Text Editor |
-| **`Alt + F`** | Focus in-diff search box |
-| **`?`** | Open keyboard shortcuts reference |
-| **`Esc`** | Close open modals or clear search |
+| macOS Shortcut | Windows / Linux Shortcut | Action |
+| :--- | :--- | :--- |
+| **`⌥ + N`** or **`⌥ + ↓`** | **`Alt + N`** or **`Alt + ↓`** | Jump to Next difference |
+| **`⌥ + P`** or **`⌥ + ↑`** | **`Alt + P`** or **`Alt + ↑`** | Jump to Previous difference |
+| **`⌥ + S`** | **`Alt + S`** | Swap left and right texts |
+| **`⌥ + 1`** | **`Alt + 1`** | Switch to Side-by-Side (Split) View |
+| **`⌥ + 2`** | **`Alt + 2`** | Switch to Unified (Inline) View |
+| **`⌥ + 3`** | **`Alt + 3`** | Switch to Live Text Editor |
+| **`⌥ + F`** or **`⌘ + Shift + F`** | **`Alt + F`** or **`Ctrl + Shift + F`** | Focus in-diff search box |
+| **`Tab`** | **`Tab`** | Insert indent spaces in editor |
+| **`?`** | **`?`** | Open keyboard shortcuts reference |
+| **`Esc`** | **`Esc`** | Close open modals or clear search |
 
 ---
 

@@ -66,3 +66,11 @@ export const STORAGE_KEYS = {
   DRAFT_ORIGINAL: 'snddiffx_draft_original_v1',
   DRAFT_MODIFIED: 'snddiffx_draft_modified_v1',
 };
+
+export const isMacPlatform = () => {
+  if (typeof navigator === 'undefined') return false;
+  return /Mac|iPod|iPhone|iPad/i.test(navigator.platform || navigator.userAgent || '');
+};
+
+export const MODIFIER_KEY = isMacPlatform() ? '⌥' : 'Alt';
+export const MODIFIER_LABEL = isMacPlatform() ? 'Option' : 'Alt';

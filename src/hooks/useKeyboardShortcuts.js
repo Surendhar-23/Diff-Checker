@@ -13,43 +13,66 @@ export function useKeyboardShortcuts(shortcuts = {}) {
         target.tagName === 'TEXTAREA' ||
         target.isContentEditable;
 
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
-
-      // Handle Escape
+      // Handle Escape (always closes modal or clears search)
       if (e.key === 'Escape' && shortcuts.onEscape) {
         shortcuts.onEscape();
         return;
       }
 
-      // Handle shortcuts with Alt or Cmd/Ctrl
-      if (e.altKey && !e.shiftKey && !cmdOrCtrl) {
-        if (e.key === 'n' || e.key === 'N' || e.key === 'ArrowDown') {
-          e.preventDefault();
-          shortcuts.onNextChange?.();
-        } else if (e.key === 'p' || e.key === 'P' || e.key === 'ArrowUp') {
-          e.preventDefault();
-          shortcuts.onPrevChange?.();
-        } else if (e.key === 's' || e.key === 'S') {
-          e.preventDefault();
-          shortcuts.onSwap?.();
-        } else if (e.key === '1') {
-          e.preventDefault();
-          shortcuts.onViewSplit?.();
-        } else if (e.key === '2') {
-          e.preventDefault();
-          shortcuts.onViewUnified?.();
-        } else if (e.key === '3') {
-          e.preventDefault();
-          shortcuts.onViewEditor?.();
-        } else if (e.key === 'f' || e.key === 'F') {
-          e.preventDefault();
-          shortcuts.onSearch?.();
+      // Modifier Detection:
+      // Option/Alt key on Mac/Win (e.altKey) OR Cmd/Ctrl (e.metaKey / e.ctrlKey)
+      const hasAlt = e.altKey;
+      const hasCmdOrCtrl = e.metaKey || e.ctrlKey;
+
+      if (hasAlt) {
+        // Use e.code because macOS converts Option+Letter into special characters on e.key
+        switch (e.code) {
+          case 'KeyN':
+          case 'ArrowDown':
+            e.preventDefault();
+            shortcuts.onNextChange?.();
+            break;
+          case 'KeyP':
+          case 'ArrowUp':
+            e.preventDefault();
+            shortcuts.onPrevChange?.();
+            break;
+          case 'KeyS':
+            e.preventDefault();
+            shortcuts.onSwap?.();
+            break;
+          case 'Digit1':
+          case 'Numpad1':
+            e.preventDefault();
+            shortcuts.onViewSplit?.();
+            break;
+          case 'Digit2':
+          case 'Numpad2':
+            e.preventDefault();
+            shortcuts.onViewUnified?.();
+            break;
+          case 'Digit3':
+          case 'Numpad3':
+            e.preventDefault();
+            shortcuts.onViewEditor?.();
+            break;
+          case 'KeyF':
+            e.preventDefault();
+            shortcuts.onSearch?.();
+            break;
+          default:
+            break;
         }
       }
 
-      // Help shortcut (? key when not typing)
-      if (e.key === '?' && !isInput && !cmdOrCtrl && !e.altKey) {
+      // Also support Cmd+Shift+F or Ctrl+Shift+F for diff search
+      if (hasCmdOrCtrl && e.shiftKey && e.code === 'KeyF') {
+        e.preventDefault();
+        shortcuts.onSearch?.();
+      }
+
+      // Help shortcut (? key when not typing in an input)
+      if ((e.key === '?' || (e.shiftKey && e.code === 'Slash')) && !isInput && !hasCmdOrCtrl && !hasAlt) {
         e.preventDefault();
         shortcuts.onHelp?.();
       }

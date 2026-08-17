@@ -29,6 +29,7 @@ import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 
 import { useDiff, useAppTheme, useHistory } from '../../hooks';
 import { DIFF_SAMPLES } from '../../core/samples';
+import { MODIFIER_KEY } from '../../core/constants';
 
 export function AppHeader({
   onOpenHistory,
@@ -129,7 +130,7 @@ export function AppHeader({
 
         {/* Center Quick Actions */}
         <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
-          <Tooltip title="Swap Left & Right texts (Alt+S)">
+          <Tooltip title={`Swap Left & Right texts (${MODIFIER_KEY}+S)`}>
             <Button
               size="small"
               variant="outlined"
