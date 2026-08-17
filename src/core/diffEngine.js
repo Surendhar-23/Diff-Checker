@@ -110,6 +110,25 @@ export function computeDiff(originalRaw, modifiedRaw, options = {}) {
   const original = prepareText(originalRaw, options);
   const modified = prepareText(modifiedRaw, options);
 
+  // Early return for completely empty inputs
+  if (!original && !modified) {
+    return {
+      splitRows: [],
+      unifiedLines: [],
+      changeHunks: [],
+      totalChanges: 0,
+      stats: {
+        additions: 0,
+        deletions: 0,
+        modifications: 0,
+        unchanged: 0,
+        totalLinesOriginal: 0,
+        totalLinesModified: 0,
+        similarityScore: 100,
+      },
+    };
+  }
+
   const diffOptions = {
     ignoreWhitespace: !!options.ignoreWhitespace,
     ignoreCase: !!options.ignoreCase,
@@ -207,6 +226,8 @@ export function computeDiff(originalRaw, modifiedRaw, options = {}) {
 
           if (hasDel && hasAdd) {
             modifications++;
+            deletions++;
+            additions++;
             const delLine = delLines[idx];
             const addLine = addLines[idx];
 
@@ -398,7 +419,9 @@ export function computeDiff(originalRaw, modifiedRaw, options = {}) {
   }
 
   // Calculate similarity score (Dice coefficient based)
-  const totalComparedLines = additions + deletions + modifications * 2 + unchanged * 2;
+  const totalOrig = oldLineNum - 1;
+  const totalMod = newLineNum - 1;
+  const totalComparedLines = totalOrig + totalMod;
   const similarityScore =
     totalComparedLines === 0
       ? 100
@@ -414,8 +437,8 @@ export function computeDiff(originalRaw, modifiedRaw, options = {}) {
       deletions,
       modifications,
       unchanged,
-      totalLinesOriginal: oldLineNum - 1,
-      totalLinesModified: newLineNum - 1,
+      totalLinesOriginal: totalOrig,
+      totalLinesModified: totalMod,
       similarityScore,
     },
   };

@@ -25,6 +25,7 @@ import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import CodeRoundedIcon from '@mui/icons-material/CodeRounded';
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 
 import { useDiff, useAppTheme, useHistory } from '../../hooks';
 import { DIFF_SAMPLES } from '../../core/samples';
@@ -41,6 +42,7 @@ export function AppHeader({
   const { history } = useHistory();
 
   const [sampleMenuAnchor, setSampleMenuAnchor] = useState(null);
+  const [mobileMenuAnchor, setMobileMenuAnchor] = useState(null);
 
   const handleOpenSampleMenu = (event) => {
     setSampleMenuAnchor(event.currentTarget);
@@ -313,6 +315,112 @@ export function AppHeader({
               )}
             </IconButton>
           </Tooltip>
+
+          {/* Mobile More Actions Menu Button */}
+          <IconButton
+            size="small"
+            onClick={(e) => setMobileMenuAnchor(e.currentTarget)}
+            sx={{
+              display: { xs: 'flex', md: 'none' },
+              border: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <MoreVertRoundedIcon fontSize="small" />
+          </IconButton>
+
+          {/* Mobile Actions Dropdown */}
+          <Menu
+            anchorEl={mobileMenuAnchor}
+            open={Boolean(mobileMenuAnchor)}
+            onClose={() => setMobileMenuAnchor(null)}
+            PaperProps={{
+              sx: {
+                minWidth: 220,
+                mt: 1,
+                borderRadius: 2,
+                boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+              },
+            }}
+          >
+            <MenuItem
+              onClick={() => {
+                swapTexts();
+                setMobileMenuAnchor(null);
+              }}
+            >
+              <ListItemIcon>
+                <CompareArrowsRoundedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Swap Texts" />
+            </MenuItem>
+
+            <MenuItem
+              onClick={() => {
+                beautifyOriginal();
+                beautifyModified();
+                setMobileMenuAnchor(null);
+              }}
+            >
+              <ListItemIcon>
+                <AutoFixHighRoundedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Format JSON" />
+            </MenuItem>
+
+            <MenuItem
+              onClick={() => {
+                setMobileMenuAnchor(null);
+                onOpenSamples?.();
+              }}
+            >
+              <ListItemIcon>
+                <MenuBookRoundedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Load Samples..." />
+            </MenuItem>
+
+            <Divider />
+
+            <MenuItem
+              onClick={() => {
+                setMobileMenuAnchor(null);
+                onOpenSettings?.();
+              }}
+            >
+              <ListItemIcon>
+                <SettingsRoundedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Settings" />
+            </MenuItem>
+
+            <MenuItem
+              onClick={() => {
+                setMobileMenuAnchor(null);
+                onOpenShortcuts?.();
+              }}
+            >
+              <ListItemIcon>
+                <KeyboardRoundedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Shortcuts" />
+            </MenuItem>
+
+            <Divider />
+
+            <MenuItem
+              onClick={() => {
+                clearAll();
+                setMobileMenuAnchor(null);
+              }}
+              sx={{ color: 'error.main' }}
+            >
+              <ListItemIcon>
+                <DeleteOutlineRoundedIcon fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText primary="Clear All Texts" />
+            </MenuItem>
+          </Menu>
         </Box>
       </Toolbar>
     </AppBar>

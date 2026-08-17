@@ -36,6 +36,18 @@
     <meta name="twitter:title" content="SNDDiffX - Free Online Diff Checker" />
     <meta name="twitter:description" content="Compare text, code, JSON, and documents instantly with sub-line word accuracy. Free, fast, and 100% private." />
 
+    <!-- Instant Theme Initializer (Prevents Theme Flickering) -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('snddiffx_theme_mode');
+          var systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var theme = (saved === 'light' || saved === 'dark') ? saved : (systemDark ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {}
+      })();
+    </script>
+
     <!-- Preconnect & Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

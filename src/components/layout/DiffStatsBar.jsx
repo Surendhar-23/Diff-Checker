@@ -38,6 +38,7 @@ export function DiffStatsBar() {
         flexWrap: 'wrap',
         gap: 1.5,
         fontSize: '0.8125rem',
+        flexShrink: 0,
       }}
     >
       {/* Metrics & Badges */}
@@ -48,7 +49,7 @@ export function DiffStatsBar() {
           value={`+${stats.additions}`}
           color="diff.addedText"
           bg="diff.addedBg"
-          border="rgba(46,160,67,0.3)"
+          border="diff.addedWord"
         />
         <StatBadge
           icon={RemoveRoundedIcon}
@@ -56,7 +57,7 @@ export function DiffStatsBar() {
           value={`-${stats.deletions}`}
           color="diff.deletedText"
           bg="diff.deletedBg"
-          border="rgba(248,81,73,0.3)"
+          border="diff.deletedWord"
         />
         <StatBadge
           icon={ChangeCircleRoundedIcon}
@@ -64,7 +65,7 @@ export function DiffStatsBar() {
           value={`~${stats.modifications}`}
           color="diff.modifiedText"
           bg="diff.modifiedBg"
-          border="rgba(217,119,6,0.3)"
+          border="diff.modifiedBg"
         />
 
         <Chip
@@ -82,11 +83,11 @@ export function DiffStatsBar() {
       </Box>
 
       {/* Similarity Progress Score */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 200 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: { xs: '100%', sm: 180 }, mt: { xs: 0.5, sm: 0 } }}>
         <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', whiteSpace: 'nowrap' }}>
           Similarity: <strong style={{ color: simColor }}>{sim}%</strong>
         </Typography>
-        <Box sx={{ flexGrow: 1, minWidth: 80 }}>
+        <Box sx={{ flexGrow: 1, minWidth: 60 }}>
           <LinearProgress
             variant="determinate"
             value={sim}

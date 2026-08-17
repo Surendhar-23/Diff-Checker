@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, Button } from '@mui/material';
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded';
+import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
 import { useDiff, useSettings } from '../../hooks';
+import { VIEW_MODES } from '../../core/constants';
 import { EditorHeader } from './EditorHeader';
 
 export function TextEditorPane() {
@@ -16,6 +18,7 @@ export function TextEditorPane() {
     setModifiedTitle,
     beautifyOriginal,
     beautifyModified,
+    setViewMode,
   } = useDiff();
 
   const { settings } = useSettings();
@@ -233,6 +236,37 @@ export function TextEditorPane() {
           )}
         </Box>
       </Paper>
+
+      {/* Floating Compare Button when text is present */}
+      {(originalText || modifiedText) && (
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 20,
+          }}
+        >
+          <Button
+            variant="contained"
+            color="primary"
+            size="medium"
+            startIcon={<CompareArrowsRoundedIcon />}
+            onClick={() => setViewMode(VIEW_MODES.SPLIT)}
+            sx={{
+              fontWeight: 700,
+              fontSize: '0.875rem',
+              px: 3,
+              py: 1,
+              borderRadius: '24px',
+              boxShadow: '0 8px 24px rgba(37,99,235,0.45)',
+            }}
+          >
+            Compare Differences (Split View)
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 }

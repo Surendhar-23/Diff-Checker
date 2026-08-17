@@ -56,11 +56,22 @@ export function EditorHeader({
       }}
     >
       {/* Title & Stats */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.85rem' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: { xs: '0.8rem', sm: '0.85rem' } }}>
           {title}
         </Typography>
-        <Typography variant="caption" sx={{ color: 'text.secondary', bgcolor: 'action.hover', px: 1, py: 0.2, borderRadius: 1 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: 'text.secondary',
+            bgcolor: 'action.hover',
+            px: 0.8,
+            py: 0.2,
+            borderRadius: 1,
+            display: { xs: 'none', sm: 'inline-block' },
+            fontSize: '0.7rem',
+          }}
+        >
           {lines} lines · {chars} chars
         </Typography>
       </Box>

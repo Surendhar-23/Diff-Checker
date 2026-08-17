@@ -1,20 +1,24 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Box, Typography, IconButton, Tooltip } from '@mui/material';
+import { Box, Typography, IconButton, Tooltip, Button, ToggleButtonGroup, ToggleButton } from '@mui/material';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 
 import { useDiff, useSettings, useSyncScroll, useClipboard } from '../../hooks';
-import { LINE_STATUS } from '../../core/constants';
+import { LINE_STATUS, VIEW_MODES } from '../../core/constants';
+import { DIFF_SAMPLES } from '../../core/samples';
 import { CollapsedLines } from './CollapsedLines';
 
 export function SplitDiffView() {
-  const { diffResult, currentChangeIndex, originalTitle, modifiedTitle, searchQuery } = useDiff();
+  const { originalText, modifiedText, diffResult, currentChangeIndex, originalTitle, modifiedTitle, searchQuery, setViewMode, loadSample } = useDiff();
   const { settings } = useSettings();
   const { leftRef, rightRef } = useSyncScroll(settings.syncScroll);
   const { copy } = useClipboard();
 
   const [copiedLineId, setCopiedLineId] = useState(null);
   const [expandedHunks, setExpandedHunks] = useState({});
+  const [mobileTab, setMobileTab] = useState('left');
 
   // Group rows for collapsible unchanged sections if enabled
   const processedRows = useMemo(() => {
@@ -95,9 +99,11 @@ export function SplitDiffView() {
       let color = 'inherit';
 
       if (isWordAdded) {
-        bg = 'var(--diff-add-word-dark, rgba(46, 160, 67, 0.35))';
+        bg = 'var(--diff-add-word)';
+        color = 'var(--diff-add-text)';
       } else if (isWordDeleted) {
-        bg = 'var(--diff-del-word-dark, rgba(248, 81, 73, 0.35))';
+        bg = 'var(--diff-del-word)';
+        color = 'var(--diff-del-text)';
       }
 
       // Search match check
@@ -134,28 +140,143 @@ export function SplitDiffView() {
     });
   };
 
-  return (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        height: '100%',
-        width: '100%',
-        bgcolor: 'background.editor',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Left Column (Original) */}
+  if (!originalText?.trim() && !modifiedText?.trim()) {
+    return (
       <Box
         sx={{
+          height: '100%',
+          width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          height: '100%',
-          borderRight: '1px solid',
-          borderColor: 'divider',
-          overflow: 'hidden',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
+          p: 3,
+          textAlign: 'center',
+          bgcolor: 'background.editor',
         }}
       >
+        <Box
+          sx={{
+            width: 56,
+            height: 56,
+            borderRadius: '16px',
+            bgcolor: 'action.hover',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'primary.main',
+          }}
+        >
+          <EditNoteRoundedIcon sx={{ fontSize: 32 }} />
+        </Box>
+
+        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          No Content to Compare Yet
+        </Typography>
+
+        <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: 460 }}>
+          You are in Comparison View. Type or paste your original and modified text into Edit mode, or load a sample demo.
+        </Typography>
+
+        <Box sx={{ display: 'flex', gap: 1.5, mt: 1 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<EditNoteRoundedIcon />}
+            onClick={() => setViewMode(VIEW_MODES.EDITOR)}
+            sx={{ fontWeight: 600, px: 2.5 }}
+          >
+            Open Text Editor
+          </Button>
+
+          <Button
+            variant="outlined"
+            color="inherit"
+            startIcon={<MenuBookRoundedIcon />}
+            onClick={() => loadSample(DIFF_SAMPLES[0])}
+            sx={{ fontWeight: 600 }}
+          >
+            Load Sample Demo
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', overflow: 'hidden' }}>
+      {/* Mobile-only Segmented Pane Switcher */}
+      <Box
+        sx={{
+          display: { xs: 'flex', md: 'none' },
+          p: 0.75,
+          bgcolor: 'background.paper',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <ToggleButtonGroup
+          value={mobileTab}
+          exclusive
+          onChange={(_, next) => next && setMobileTab(next)}
+          size="small"
+          fullWidth
+          sx={{
+            maxWidth: 340,
+            bgcolor: 'action.hover',
+            p: '2px',
+            borderRadius: '8px',
+            '& .MuiToggleButton-root': {
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              py: 0.4,
+              textTransform: 'none',
+              '&.Mui-selected': {
+                bgcolor: 'background.paper',
+                color: 'primary.main',
+                fontWeight: 700,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              },
+            },
+          }}
+        >
+          <ToggleButton value="left">
+            🔴 {originalTitle || 'Original'}
+          </ToggleButton>
+          <ToggleButton value="right">
+            🟢 {modifiedTitle || 'Modified'}
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+
+      {/* Main Grid Container */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          flexGrow: 1,
+          width: '100%',
+          bgcolor: 'background.editor',
+          overflow: 'hidden',
+          minHeight: 0,
+        }}
+      >
+        {/* Left Column (Original) */}
+        <Box
+          sx={{
+            display: { xs: mobileTab === 'left' ? 'flex' : 'none', md: 'flex' },
+            flexDirection: 'column',
+            height: '100%',
+            borderRight: { xs: 'none', md: '1px solid' },
+            borderColor: 'divider',
+            overflow: 'hidden',
+          }}
+        >
         {/* Pane Header */}
         <Box
           sx={{
@@ -206,10 +327,11 @@ export function SplitDiffView() {
             let rowTextColor = 'inherit';
 
             if (info.type === LINE_STATUS.DELETED) {
-              rowBg = 'var(--diff-del-bg-dark, rgba(248, 81, 73, 0.15))';
-              rowTextColor = 'var(--diff-del-text-dark, #ff7b72)';
+              rowBg = 'var(--diff-del-bg)';
+              rowTextColor = 'var(--diff-del-text)';
             } else if (info.type === LINE_STATUS.MODIFIED) {
-              rowBg = 'var(--diff-del-bg-dark, rgba(248, 81, 73, 0.12))';
+              rowBg = 'var(--diff-del-bg)';
+              rowTextColor = 'var(--diff-del-text)';
             } else if (info.type === LINE_STATUS.EMPTY) {
               rowBg = 'action.hover';
             }
@@ -305,7 +427,7 @@ export function SplitDiffView() {
       {/* Right Column (Modified) */}
       <Box
         sx={{
-          display: 'flex',
+          display: { xs: mobileTab === 'right' ? 'flex' : 'none', md: 'flex' },
           flexDirection: 'column',
           height: '100%',
           overflow: 'hidden',
@@ -361,10 +483,11 @@ export function SplitDiffView() {
             let rowTextColor = 'inherit';
 
             if (info.type === LINE_STATUS.ADDED) {
-              rowBg = 'var(--diff-add-bg-dark, rgba(46, 160, 67, 0.15))';
-              rowTextColor = 'var(--diff-add-text-dark, #7ee787)';
+              rowBg = 'var(--diff-add-bg)';
+              rowTextColor = 'var(--diff-add-text)';
             } else if (info.type === LINE_STATUS.MODIFIED) {
-              rowBg = 'var(--diff-add-bg-dark, rgba(46, 160, 67, 0.12))';
+              rowBg = 'var(--diff-add-bg)';
+              rowTextColor = 'var(--diff-add-text)';
             } else if (info.type === LINE_STATUS.EMPTY) {
               rowBg = 'action.hover';
             }
@@ -455,6 +578,7 @@ export function SplitDiffView() {
           })}
         </Box>
       </Box>
+    </Box>
     </Box>
   );
 }

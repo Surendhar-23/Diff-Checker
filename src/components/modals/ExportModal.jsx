@@ -104,8 +104,10 @@ export function ExportModal({ open, onClose }) {
               border: '1px solid',
               borderColor: 'divider',
               display: 'flex',
-              alignItems: 'center',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' },
               justifyContent: 'space-between',
+              gap: 1.5,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -139,8 +141,10 @@ export function ExportModal({ open, onClose }) {
               border: '1px solid',
               borderColor: 'divider',
               display: 'flex',
-              alignItems: 'center',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' },
               justifyContent: 'space-between',
+              gap: 1.5,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -174,8 +178,10 @@ export function ExportModal({ open, onClose }) {
               border: '1px solid',
               borderColor: 'divider',
               display: 'flex',
-              alignItems: 'center',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' },
               justifyContent: 'space-between',
+              gap: 1.5,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -210,8 +216,10 @@ export function ExportModal({ open, onClose }) {
               border: '1px solid',
               borderColor: 'divider',
               display: 'flex',
-              alignItems: 'center',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' },
               justifyContent: 'space-between',
+              gap: 1.5,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>

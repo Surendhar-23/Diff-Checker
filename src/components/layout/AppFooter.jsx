@@ -18,7 +18,7 @@ export function AppFooter({ onOpenShortcuts }) {
         bgcolor: 'background.paper',
         borderTop: '1px solid',
         borderColor: 'divider',
-        display: 'flex',
+        display: { xs: 'none', sm: 'flex' },
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
@@ -26,6 +26,7 @@ export function AppFooter({ onOpenShortcuts }) {
         color: 'text.secondary',
         userSelect: 'none',
         minHeight: 28,
+        flexShrink: 0,
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

@@ -1,14 +1,17 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Box, IconButton, Tooltip } from '@mui/material';
+import { Box, Typography, IconButton, Tooltip, Button } from '@mui/material';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 
 import { useDiff, useSettings, useClipboard } from '../../hooks';
-import { LINE_STATUS } from '../../core/constants';
+import { LINE_STATUS, VIEW_MODES } from '../../core/constants';
+import { DIFF_SAMPLES } from '../../core/samples';
 import { CollapsedLines } from './CollapsedLines';
 
 export function UnifiedDiffView() {
-  const { diffResult, currentChangeIndex, searchQuery } = useDiff();
+  const { originalText, modifiedText, diffResult, currentChangeIndex, searchQuery, setViewMode, loadSample } = useDiff();
   const { settings } = useSettings();
   const { copy } = useClipboard();
 
@@ -92,9 +95,11 @@ export function UnifiedDiffView() {
       let color = 'inherit';
 
       if (isWordAdded) {
-        bg = 'var(--diff-add-word-dark, rgba(46, 160, 67, 0.35))';
+        bg = 'var(--diff-add-word)';
+        color = 'var(--diff-add-text)';
       } else if (isWordDeleted) {
-        bg = 'var(--diff-del-word-dark, rgba(248, 81, 73, 0.35))';
+        bg = 'var(--diff-del-word)';
+        color = 'var(--diff-del-text)';
       }
 
       if (query && query.trim() && part.text.toLowerCase().includes(query.toLowerCase())) {
@@ -128,6 +133,70 @@ export function UnifiedDiffView() {
       );
     });
   };
+
+  if (!originalText?.trim() && !modifiedText?.trim()) {
+    return (
+      <Box
+        sx={{
+          height: '100%',
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
+          p: 3,
+          textAlign: 'center',
+          bgcolor: 'background.editor',
+        }}
+      >
+        <Box
+          sx={{
+            width: 56,
+            height: 56,
+            borderRadius: '16px',
+            bgcolor: 'action.hover',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'primary.main',
+          }}
+        >
+          <EditNoteRoundedIcon sx={{ fontSize: 32 }} />
+        </Box>
+
+        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          No Content to Compare Yet
+        </Typography>
+
+        <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: 460 }}>
+          You are in Unified View. Type or paste your original and modified text into Edit mode, or load a sample demo.
+        </Typography>
+
+        <Box sx={{ display: 'flex', gap: 1.5, mt: 1 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<EditNoteRoundedIcon />}
+            onClick={() => setViewMode(VIEW_MODES.EDITOR)}
+            sx={{ fontWeight: 600, px: 2.5 }}
+          >
+            Open Text Editor
+          </Button>
+
+          <Button
+            variant="outlined"
+            color="inherit"
+            startIcon={<MenuBookRoundedIcon />}
+            onClick={() => loadSample(DIFF_SAMPLES[0])}
+            sx={{ fontWeight: 600 }}
+          >
+            Load Sample Demo
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -164,12 +233,12 @@ export function UnifiedDiffView() {
         let marker = ' ';
 
         if (isAdded) {
-          rowBg = 'var(--diff-add-bg-dark, rgba(46, 160, 67, 0.15))';
-          rowColor = 'var(--diff-add-text-dark, #7ee787)';
+          rowBg = 'var(--diff-add-bg)';
+          rowColor = 'var(--diff-add-text)';
           marker = '+';
         } else if (isDeleted) {
-          rowBg = 'var(--diff-del-bg-dark, rgba(248, 81, 73, 0.15))';
-          rowColor = 'var(--diff-del-text-dark, #ff7b72)';
+          rowBg = 'var(--diff-del-bg)';
+          rowColor = 'var(--diff-del-text)';
           marker = '-';
         }
 
@@ -192,16 +261,16 @@ export function UnifiedDiffView() {
               <>
                 <Box
                   sx={{
-                    width: 44,
-                    minWidth: 44,
-                    px: 1,
+                    width: { xs: 32, sm: 44 },
+                    minWidth: { xs: 32, sm: 44 },
+                    px: { xs: 0.5, sm: 1 },
                     textAlign: 'right',
                     userSelect: 'none',
                     color: 'text.disabled',
                     bgcolor: 'background.gutter',
                     borderRight: '1px solid',
                     borderColor: 'divider',
-                    fontSize: '0.75rem',
+                    fontSize: { xs: '0.68rem', sm: '0.75rem' },
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'flex-end',
@@ -213,16 +282,16 @@ export function UnifiedDiffView() {
                 {/* New Line Gutter */}
                 <Box
                   sx={{
-                    width: 44,
-                    minWidth: 44,
-                    px: 1,
+                    width: { xs: 32, sm: 44 },
+                    minWidth: { xs: 32, sm: 44 },
+                    px: { xs: 0.5, sm: 1 },
                     textAlign: 'right',
                     userSelect: 'none',
                     color: 'text.disabled',
                     bgcolor: 'background.gutter',
                     borderRight: '1px solid',
                     borderColor: 'divider',
-                    fontSize: '0.75rem',
+                    fontSize: { xs: '0.68rem', sm: '0.75rem' },
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'flex-end',
@@ -236,11 +305,12 @@ export function UnifiedDiffView() {
             {/* Marker (+, -, space) */}
             <Box
               sx={{
-                width: 24,
-                minWidth: 24,
+                width: { xs: 18, sm: 24 },
+                minWidth: { xs: 18, sm: 24 },
                 textAlign: 'center',
                 userSelect: 'none',
                 fontWeight: 700,
+                fontSize: { xs: '0.75rem', sm: '0.85rem' },
                 color: isAdded ? 'success.main' : isDeleted ? 'error.main' : 'text.disabled',
               }}
             >
@@ -250,7 +320,7 @@ export function UnifiedDiffView() {
             {/* Content */}
             <Box
               sx={{
-                px: 1.5,
+                px: { xs: 0.75, sm: 1.5 },
                 flexGrow: 1,
                 whiteSpace: settings.wrapLines ? 'pre-wrap' : 'pre',
                 wordBreak: 'break-all',

@@ -11,6 +11,7 @@ import {
   FormControlLabel,
   Popover,
   Button,
+  Divider,
 } from '@mui/material';
 import ViewColumnRoundedIcon from '@mui/icons-material/ViewColumnRounded';
 import ViewStreamRoundedIcon from '@mui/icons-material/ViewStreamRounded';
@@ -78,6 +79,7 @@ export function DiffToolbar() {
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 1.5,
+        flexShrink: 0,
       }}
     >
       {/* Left: View Mode Toggle & Diff Granularity */}
@@ -111,16 +113,16 @@ export function DiffToolbar() {
           }}
         >
           <ToggleButton value={VIEW_MODES.SPLIT} aria-label="Split View">
-            <ViewColumnRoundedIcon sx={{ fontSize: 16, mr: 0.6 }} />
-            Split View
+            <ViewColumnRoundedIcon sx={{ fontSize: 16, mr: { xs: 0.3, sm: 0.6 } }} />
+            Split<Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>&nbsp;View</Box>
           </ToggleButton>
           <ToggleButton value={VIEW_MODES.UNIFIED} aria-label="Unified View">
-            <ViewStreamRoundedIcon sx={{ fontSize: 16, mr: 0.6 }} />
-            Unified View
+            <ViewStreamRoundedIcon sx={{ fontSize: 16, mr: { xs: 0.3, sm: 0.6 } }} />
+            Unified<Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>&nbsp;View</Box>
           </ToggleButton>
           <ToggleButton value={VIEW_MODES.EDITOR} aria-label="Editor View">
-            <EditNoteRoundedIcon sx={{ fontSize: 16, mr: 0.6 }} />
-            Edit Texts
+            <EditNoteRoundedIcon sx={{ fontSize: 16, mr: { xs: 0.3, sm: 0.6 } }} />
+            Edit<Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>&nbsp;Texts</Box>
           </ToggleButton>
         </ToggleButtonGroup>
 
@@ -279,6 +281,43 @@ export function DiffToolbar() {
             },
           }}
         >
+          {/* Mobile-only Diff Granularity Selector */}
+          <Box sx={{ display: { xs: 'block', sm: 'none' }, mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+              Diff Granularity
+            </Typography>
+            <ToggleButtonGroup
+              value={options.diffType}
+              exclusive
+              onChange={handleDiffTypeChange}
+              size="small"
+              fullWidth
+              sx={{
+                bgcolor: 'action.hover',
+                p: '2px',
+                borderRadius: '8px',
+                '& .MuiToggleButton-root': {
+                  border: 'none',
+                  fontSize: '0.72rem',
+                  py: 0.4,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  '&.Mui-selected': {
+                    bgcolor: 'background.paper',
+                    color: 'primary.main',
+                    fontWeight: 700,
+                  },
+                },
+              }}
+            >
+              <ToggleButton value={DIFF_TYPES.LINE}>Line</ToggleButton>
+              <ToggleButton value={DIFF_TYPES.WORD}>Word</ToggleButton>
+              <ToggleButton value={DIFF_TYPES.CHAR}>Char</ToggleButton>
+              <ToggleButton value={DIFF_TYPES.JSON}>JSON</ToggleButton>
+            </ToggleButtonGroup>
+            <Divider sx={{ my: 1.5 }} />
+          </Box>
+
           <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
             Comparison Rules
           </Typography>

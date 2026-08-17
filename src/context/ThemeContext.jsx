@@ -1,32 +1,70 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
 import { createAppTheme } from '../theme';
 import { STORAGE_KEYS } from '../core/constants';
 import { ThemeContext } from './contexts';
 
+function getSystemTheme() {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return 'dark';
+}
+
 export function ThemeProvider({ children }) {
   const [mode, setModeState] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.THEME_MODE);
-    if (saved === 'light' || saved === 'dark') return saved;
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-      return 'light';
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.THEME_MODE);
+      if (saved === 'light' || saved === 'dark') return saved;
+    } catch {
+      // localStorage unavailable in some sandboxes
     }
-    return 'dark';
+    return getSystemTheme();
   });
 
-  const setMode = (newMode) => {
+  const setMode = useCallback((newMode) => {
     setModeState(newMode);
-    localStorage.setItem(STORAGE_KEYS.THEME_MODE, newMode);
-  };
+    try {
+      localStorage.setItem(STORAGE_KEYS.THEME_MODE, newMode);
+    } catch {
+      // ignore
+    }
+  }, []);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     const next = mode === 'dark' ? 'light' : 'dark';
     setMode(next);
-  };
+  }, [mode, setMode]);
 
+  // Sync data-theme attribute on document root
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', mode);
   }, [mode]);
+
+  // Dynamically respond to OS system theme changes if user hasn't explicitly saved a preference
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemChange = (e) => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEYS.THEME_MODE);
+        if (!saved) {
+          setModeState(e.matches ? 'dark' : 'light');
+        }
+      } catch {
+        setModeState(e.matches ? 'dark' : 'light');
+      }
+    };
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleSystemChange);
+      return () => mediaQuery.removeEventListener('change', handleSystemChange);
+    } else if (mediaQuery.addListener) {
+      mediaQuery.addListener(handleSystemChange);
+      return () => mediaQuery.removeListener(handleSystemChange);
+    }
+  }, []);
 
   const theme = useMemo(() => createAppTheme(mode), [mode]);
 

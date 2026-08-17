@@ -3,27 +3,25 @@ import { DEFAULT_DIFF_OPTIONS, DIFF_TYPES, VIEW_MODES, STORAGE_KEYS } from '../c
 import { computeDiff } from '../core/diffEngine';
 import { formatJsonString, detectLanguage } from '../core/formatters';
 import { decodeDiffFromUrl } from '../core/urlState';
-import { DIFF_SAMPLES } from '../core/samples';
 import { useHistory } from '../hooks/useHistory';
 import { DiffContext } from './contexts';
 
 export function DiffProvider({ children }) {
   const { addHistoryItem } = useHistory();
 
-  // Check URL state first, then localStorage drafts, then initial sample
+  // Check URL state first, then localStorage drafts, or start fresh in Edit mode
   const initialUrlState = useMemo(() => decodeDiffFromUrl(), []);
-  const initialSample = DIFF_SAMPLES[0];
 
   const [originalText, setOriginalTextState] = useState(() => {
     if (initialUrlState?.original) return initialUrlState.original;
     const saved = localStorage.getItem(STORAGE_KEYS.DRAFT_ORIGINAL);
-    return saved !== null ? saved : initialSample.original;
+    return saved !== null ? saved : '';
   });
 
   const [modifiedText, setModifiedTextState] = useState(() => {
     if (initialUrlState?.modified) return initialUrlState.modified;
     const saved = localStorage.getItem(STORAGE_KEYS.DRAFT_MODIFIED);
-    return saved !== null ? saved : initialSample.modified;
+    return saved !== null ? saved : '';
   });
 
   const [originalTitle, setOriginalTitle] = useState('Original');
@@ -36,7 +34,15 @@ export function DiffProvider({ children }) {
     return DEFAULT_DIFF_OPTIONS;
   });
 
-  const [viewMode, setViewMode] = useState(VIEW_MODES.SPLIT);
+  const [viewMode, setViewMode] = useState(() => {
+    if (initialUrlState?.original || initialUrlState?.modified) return VIEW_MODES.SPLIT;
+    const savedOriginal = localStorage.getItem(STORAGE_KEYS.DRAFT_ORIGINAL);
+    const savedModified = localStorage.getItem(STORAGE_KEYS.DRAFT_MODIFIED);
+    if (savedOriginal?.trim() || savedModified?.trim()) {
+      return VIEW_MODES.SPLIT;
+    }
+    return VIEW_MODES.EDITOR;
+  });
   const [currentChangeIndex, setCurrentChangeIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
@@ -185,6 +191,7 @@ export function DiffProvider({ children }) {
     if (sample.language === 'json') {
       updateOption('diffType', DIFF_TYPES.JSON);
     }
+    setViewMode(VIEW_MODES.SPLIT);
     setToastMessage(`Loaded sample: ${sample.name}`);
   }, [setOriginalText, setModifiedText, updateOption]);
 
@@ -195,6 +202,7 @@ export function DiffProvider({ children }) {
     if (item.options) setOptions(item.options);
     setOriginalTitle('Original (Restored)');
     setModifiedTitle('Modified (Restored)');
+    setViewMode(VIEW_MODES.SPLIT);
     setToastMessage('Restored session from history');
   }, [setOriginalText, setModifiedText]);
 
