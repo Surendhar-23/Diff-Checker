@@ -1,0 +1,6 @@
+# robots.txt for SNDDiffX
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://snddiffx.com/sitemap.xml

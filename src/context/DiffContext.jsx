@@ -1,0 +1,238 @@
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { DEFAULT_DIFF_OPTIONS, DIFF_TYPES, VIEW_MODES, STORAGE_KEYS } from '../core/constants';
+import { computeDiff } from '../core/diffEngine';
+import { formatJsonString, detectLanguage } from '../core/formatters';
+import { decodeDiffFromUrl } from '../core/urlState';
+import { DIFF_SAMPLES } from '../core/samples';
+import { useHistory } from '../hooks/useHistory';
+import { DiffContext } from './contexts';
+
+export function DiffProvider({ children }) {
+  const { addHistoryItem } = useHistory();
+
+  // Check URL state first, then localStorage drafts, then initial sample
+  const initialUrlState = useMemo(() => decodeDiffFromUrl(), []);
+  const initialSample = DIFF_SAMPLES[0];
+
+  const [originalText, setOriginalTextState] = useState(() => {
+    if (initialUrlState?.original) return initialUrlState.original;
+    const saved = localStorage.getItem(STORAGE_KEYS.DRAFT_ORIGINAL);
+    return saved !== null ? saved : initialSample.original;
+  });
+
+  const [modifiedText, setModifiedTextState] = useState(() => {
+    if (initialUrlState?.modified) return initialUrlState.modified;
+    const saved = localStorage.getItem(STORAGE_KEYS.DRAFT_MODIFIED);
+    return saved !== null ? saved : initialSample.modified;
+  });
+
+  const [originalTitle, setOriginalTitle] = useState('Original');
+  const [modifiedTitle, setModifiedTitle] = useState('Modified');
+
+  const [options, setOptions] = useState(() => {
+    if (initialUrlState?.diffType) {
+      return { ...DEFAULT_DIFF_OPTIONS, diffType: initialUrlState.diffType };
+    }
+    return DEFAULT_DIFF_OPTIONS;
+  });
+
+  const [viewMode, setViewMode] = useState(VIEW_MODES.SPLIT);
+  const [currentChangeIndex, setCurrentChangeIndex] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [toastMessage, setToastMessage] = useState(null);
+
+  // Sync drafts to local storage
+  const setOriginalText = useCallback((val) => {
+    setOriginalTextState(val);
+    try {
+      localStorage.setItem(STORAGE_KEYS.DRAFT_ORIGINAL, val);
+    } catch {
+      // quota or private mode
+    }
+  }, []);
+
+  const setModifiedText = useCallback((val) => {
+    setModifiedTextState(val);
+    try {
+      localStorage.setItem(STORAGE_KEYS.DRAFT_MODIFIED, val);
+    } catch {
+      // quota or private mode
+    }
+  }, []);
+
+  const updateOption = useCallback((key, val) => {
+    setOptions((prev) => ({ ...prev, [key]: val }));
+  }, []);
+
+  // Compute Diff (Memoized)
+  const diffResult = useMemo(() => {
+    return computeDiff(originalText, modifiedText, options);
+  }, [originalText, modifiedText, options]);
+
+  // Language auto-detection
+  const detectedLanguage = useMemo(() => {
+    const origLang = detectLanguage(originalText);
+    const modLang = detectLanguage(modifiedText);
+    return origLang !== 'plaintext' ? origLang : modLang;
+  }, [originalText, modifiedText]);
+
+  // Debounced auto-save to History
+  const historySaveTimerRef = useRef(null);
+  useEffect(() => {
+    if (historySaveTimerRef.current) {
+      clearTimeout(historySaveTimerRef.current);
+    }
+
+    if (!originalText && !modifiedText) return;
+
+    historySaveTimerRef.current = setTimeout(() => {
+      addHistoryItem({
+        title: `${originalTitle} vs ${modifiedTitle}`,
+        original: originalText,
+        modified: modifiedText,
+        options,
+        stats: diffResult.stats,
+        language: detectedLanguage,
+      });
+    }, 2500);
+
+    return () => {
+      if (historySaveTimerRef.current) clearTimeout(historySaveTimerRef.current);
+    };
+  }, [originalText, modifiedText, originalTitle, modifiedTitle, options, diffResult.stats, detectedLanguage, addHistoryItem]);
+
+  // Change navigation actions
+  const totalChanges = diffResult.totalChanges;
+
+  const goToNextChange = useCallback(() => {
+    if (totalChanges === 0) return;
+    setCurrentChangeIndex((prev) => {
+      const next = prev >= totalChanges ? 1 : prev + 1;
+      return next;
+    });
+  }, [totalChanges]);
+
+  const goToPrevChange = useCallback(() => {
+    if (totalChanges === 0) return;
+    setCurrentChangeIndex((prev) => {
+      const next = prev <= 1 ? totalChanges : prev - 1;
+      return next;
+    });
+  }, [totalChanges]);
+
+  const goToChangeIndex = useCallback((idx) => {
+    setCurrentChangeIndex(idx);
+  }, []);
+
+  // Quick Action Utilities
+  const swapTexts = useCallback(() => {
+    setOriginalTextState((orig) => {
+      setModifiedTextState(orig);
+      try {
+        localStorage.setItem(STORAGE_KEYS.DRAFT_MODIFIED, orig);
+      } catch (_err) {
+        // ignore
+      }
+      return modifiedText;
+    });
+    try {
+      localStorage.setItem(STORAGE_KEYS.DRAFT_ORIGINAL, modifiedText);
+    } catch (_err) {
+      // ignore
+    }
+
+    setOriginalTitle((ot) => {
+      setModifiedTitle(ot);
+      return modifiedTitle;
+    });
+    setToastMessage('Swapped Left and Right texts');
+  }, [modifiedText, modifiedTitle]);
+
+  const clearAll = useCallback(() => {
+    setOriginalText('');
+    setModifiedText('');
+    setOriginalTitle('Original');
+    setModifiedTitle('Modified');
+    setToastMessage('Cleared all content');
+  }, [setOriginalText, setModifiedText]);
+
+  const beautifyOriginal = useCallback(() => {
+    try {
+      const formatted = formatJsonString(originalText, options.sortJsonKeys !== false);
+      setOriginalText(formatted);
+      setToastMessage('Formatted Left text as JSON');
+    } catch (_err) {
+      setToastMessage('Could not parse Left text as JSON');
+    }
+  }, [originalText, options.sortJsonKeys, setOriginalText]);
+
+  const beautifyModified = useCallback(() => {
+    try {
+      const formatted = formatJsonString(modifiedText, options.sortJsonKeys !== false);
+      setModifiedText(formatted);
+      setToastMessage('Formatted Right text as JSON');
+    } catch (_err) {
+      setToastMessage('Could not parse Right text as JSON');
+    }
+  }, [modifiedText, options.sortJsonKeys, setModifiedText]);
+
+  const loadSample = useCallback((sample) => {
+    if (!sample) return;
+    setOriginalText(sample.original);
+    setModifiedText(sample.modified);
+    setOriginalTitle(`${sample.name} (v1)`);
+    setModifiedTitle(`${sample.name} (v2)`);
+    if (sample.language === 'json') {
+      updateOption('diffType', DIFF_TYPES.JSON);
+    }
+    setToastMessage(`Loaded sample: ${sample.name}`);
+  }, [setOriginalText, setModifiedText, updateOption]);
+
+  const restoreFromHistory = useCallback((item) => {
+    if (!item) return;
+    setOriginalText(item.original || '');
+    setModifiedText(item.modified || '');
+    if (item.options) setOptions(item.options);
+    setOriginalTitle('Original (Restored)');
+    setModifiedTitle('Modified (Restored)');
+    setToastMessage('Restored session from history');
+  }, [setOriginalText, setModifiedText]);
+
+  return (
+    <DiffContext.Provider
+      value={{
+        originalText,
+        setOriginalText,
+        modifiedText,
+        setModifiedText,
+        originalTitle,
+        setOriginalTitle,
+        modifiedTitle,
+        setModifiedTitle,
+        options,
+        setOptions,
+        updateOption,
+        viewMode,
+        setViewMode,
+        diffResult,
+        detectedLanguage,
+        currentChangeIndex,
+        goToNextChange,
+        goToPrevChange,
+        goToChangeIndex,
+        searchQuery,
+        setSearchQuery,
+        swapTexts,
+        clearAll,
+        beautifyOriginal,
+        beautifyModified,
+        loadSample,
+        restoreFromHistory,
+        toastMessage,
+        setToastMessage,
+      }}
+    >
+      {children}
+    </DiffContext.Provider>
+  );
+}
