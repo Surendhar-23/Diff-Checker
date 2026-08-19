@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Paper, Typography, Button } from '@mui/material';
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded';
 import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
-import { useDiff, useSettings } from '../../hooks';
+import { useDiff, useSettings, useSyncScroll } from '../../hooks';
 import { VIEW_MODES } from '../../core/constants';
 import { EditorHeader } from './EditorHeader';
 
@@ -19,12 +19,35 @@ export function TextEditorPane() {
     beautifyOriginal,
     beautifyModified,
     setViewMode,
+    updateScrollRatio,
+    getScrollRatio,
+    viewMode,
   } = useDiff();
 
   const { settings } = useSettings();
+  const { leftRef: leftEditorRef, rightRef: rightEditorRef } = useSyncScroll(settings.syncScroll, updateScrollRatio);
 
   const [leftDragOver, setLeftDragOver] = useState(false);
   const [rightDragOver, setRightDragOver] = useState(false);
+
+  // Restore scroll position when editor becomes active
+  useEffect(() => {
+    if (viewMode === VIEW_MODES.EDITOR) {
+      const ratio = getScrollRatio();
+      if (ratio > 0) {
+        requestAnimationFrame(() => {
+          if (leftEditorRef.current) {
+            const max = Math.max(1, leftEditorRef.current.scrollHeight - leftEditorRef.current.clientHeight);
+            leftEditorRef.current.scrollTop = ratio * max;
+          }
+          if (rightEditorRef.current) {
+            const max = Math.max(1, rightEditorRef.current.scrollHeight - rightEditorRef.current.clientHeight);
+            rightEditorRef.current.scrollTop = ratio * max;
+          }
+        });
+      }
+    }
+  }, [viewMode, getScrollRatio, leftEditorRef, rightEditorRef]);
 
   // Tab key handler to insert spaces
   const handleKeyDown = (e, setter) => {
@@ -107,6 +130,7 @@ export function TextEditorPane() {
 
         <Box sx={{ flexGrow: 1, position: 'relative', overflow: 'hidden' }}>
           <textarea
+            ref={leftEditorRef}
             value={originalText}
             onChange={(e) => setOriginalText(e.target.value)}
             onKeyDown={(e) => handleKeyDown(e, setOriginalText)}
@@ -188,6 +212,7 @@ export function TextEditorPane() {
 
         <Box sx={{ flexGrow: 1, position: 'relative', overflow: 'hidden' }}>
           <textarea
+            ref={rightEditorRef}
             value={modifiedText}
             onChange={(e) => setModifiedText(e.target.value)}
             onKeyDown={(e) => handleKeyDown(e, setModifiedText)}

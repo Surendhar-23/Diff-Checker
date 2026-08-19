@@ -47,6 +47,19 @@ export function DiffProvider({ children }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
 
+  // Shared scroll position ratio across Split, Unified, and Editor views
+  const scrollRatioRef = useRef(0);
+
+  const updateScrollRatio = useCallback((ratio) => {
+    if (typeof ratio === 'number' && !isNaN(ratio)) {
+      scrollRatioRef.current = Math.max(0, Math.min(1, ratio));
+    }
+  }, []);
+
+  const getScrollRatio = useCallback(() => {
+    return scrollRatioRef.current || 0;
+  }, []);
+
   // Sync drafts to local storage
   const setOriginalText = useCallback((val) => {
     setOriginalTextState(val);
@@ -164,7 +177,7 @@ export function DiffProvider({ children }) {
 
   const beautifyOriginal = useCallback(() => {
     try {
-      const formatted = formatJsonString(originalText, options.sortJsonKeys !== false);
+      const formatted = formatJsonString(originalText, !!options.sortJsonKeys);
       setOriginalText(formatted);
       setToastMessage('Formatted Left text as JSON');
     } catch (_err) {
@@ -174,7 +187,7 @@ export function DiffProvider({ children }) {
 
   const beautifyModified = useCallback(() => {
     try {
-      const formatted = formatJsonString(modifiedText, options.sortJsonKeys !== false);
+      const formatted = formatJsonString(modifiedText, !!options.sortJsonKeys);
       setModifiedText(formatted);
       setToastMessage('Formatted Right text as JSON');
     } catch (_err) {
@@ -238,6 +251,8 @@ export function DiffProvider({ children }) {
         restoreFromHistory,
         toastMessage,
         setToastMessage,
+        updateScrollRatio,
+        getScrollRatio,
       }}
     >
       {children}

@@ -1,56 +1,67 @@
 import { useRef, useEffect, useCallback } from 'react';
 
 /**
- * High-performance synchronized scroll hook for split diff view
+ * High-performance synchronized scroll hook for split diff & editor views
  */
-export function useSyncScroll(enabled = true) {
+export function useSyncScroll(enabled = true, onScrollRatio = null) {
   const leftRef = useRef(null);
   const rightRef = useRef(null);
   const isScrollingRef = useRef(null); // 'left' | 'right' | null
 
   const handleScroll = useCallback((source) => {
-    if (!enabled) return;
+    const leftEl = leftRef.current;
+    const rightEl = rightRef.current;
 
-    if (source === 'left') {
-      if (isScrollingRef.current === 'right') return;
+    if (source === 'left' && leftEl) {
+      if (onScrollRatio) {
+        const maxScroll = Math.max(1, leftEl.scrollHeight - leftEl.clientHeight);
+        onScrollRatio(leftEl.scrollTop / maxScroll);
+      }
+
+      if (!enabled || isScrollingRef.current === 'right') return;
       isScrollingRef.current = 'left';
 
-      if (leftRef.current && rightRef.current) {
-        rightRef.current.scrollTop = leftRef.current.scrollTop;
-        rightRef.current.scrollLeft = leftRef.current.scrollLeft;
+      if (rightEl) {
+        rightEl.scrollTop = leftEl.scrollTop;
+        rightEl.scrollLeft = leftEl.scrollLeft;
       }
-    } else if (source === 'right') {
-      if (isScrollingRef.current === 'left') return;
+    } else if (source === 'right' && rightEl) {
+      if (onScrollRatio) {
+        const maxScroll = Math.max(1, rightEl.scrollHeight - rightEl.clientHeight);
+        onScrollRatio(rightEl.scrollTop / maxScroll);
+      }
+
+      if (!enabled || isScrollingRef.current === 'left') return;
       isScrollingRef.current = 'right';
 
-      if (leftRef.current && rightRef.current) {
-        leftRef.current.scrollTop = rightRef.current.scrollTop;
-        leftRef.current.scrollLeft = rightRef.current.scrollLeft;
+      if (leftEl) {
+        leftEl.scrollTop = rightEl.scrollTop;
+        leftEl.scrollLeft = rightEl.scrollLeft;
       }
     }
 
     requestAnimationFrame(() => {
       isScrollingRef.current = null;
     });
-  }, [enabled]);
+  }, [enabled, onScrollRatio]);
 
   useEffect(() => {
     const leftEl = leftRef.current;
     const rightEl = rightRef.current;
 
-    if (!leftEl || !rightEl || !enabled) return;
+    if (!leftEl && !rightEl) return;
 
     const onLeftScroll = () => handleScroll('left');
     const onRightScroll = () => handleScroll('right');
 
-    leftEl.addEventListener('scroll', onLeftScroll, { passive: true });
-    rightEl.addEventListener('scroll', onRightScroll, { passive: true });
+    if (leftEl) leftEl.addEventListener('scroll', onLeftScroll, { passive: true });
+    if (rightEl) rightEl.addEventListener('scroll', onRightScroll, { passive: true });
 
     return () => {
-      leftEl.removeEventListener('scroll', onLeftScroll);
-      rightEl.removeEventListener('scroll', onRightScroll);
+      if (leftEl) leftEl.removeEventListener('scroll', onLeftScroll);
+      if (rightEl) rightEl.removeEventListener('scroll', onRightScroll);
     };
-  }, [handleScroll, enabled]);
+  }, [handleScroll]);
 
   return { leftRef, rightRef };
 }

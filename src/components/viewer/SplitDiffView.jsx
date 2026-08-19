@@ -11,14 +11,46 @@ import { DIFF_SAMPLES } from '../../core/samples';
 import { CollapsedLines } from './CollapsedLines';
 
 export function SplitDiffView() {
-  const { originalText, modifiedText, diffResult, currentChangeIndex, originalTitle, modifiedTitle, searchQuery, setViewMode, loadSample } = useDiff();
+  const {
+    originalText,
+    modifiedText,
+    diffResult,
+    currentChangeIndex,
+    originalTitle,
+    modifiedTitle,
+    searchQuery,
+    setViewMode,
+    loadSample,
+    updateScrollRatio,
+    getScrollRatio,
+    viewMode,
+  } = useDiff();
   const { settings } = useSettings();
-  const { leftRef, rightRef } = useSyncScroll(settings.syncScroll);
+  const { leftRef, rightRef } = useSyncScroll(settings.syncScroll, updateScrollRatio);
   const { copy } = useClipboard();
 
   const [copiedLineId, setCopiedLineId] = useState(null);
   const [expandedHunks, setExpandedHunks] = useState({});
   const [mobileTab, setMobileTab] = useState('left');
+
+  // Restore scroll position when view becomes active
+  useEffect(() => {
+    if (viewMode === VIEW_MODES.SPLIT) {
+      const ratio = getScrollRatio();
+      if (ratio > 0) {
+        requestAnimationFrame(() => {
+          if (leftRef.current) {
+            const max = Math.max(1, leftRef.current.scrollHeight - leftRef.current.clientHeight);
+            leftRef.current.scrollTop = ratio * max;
+          }
+          if (rightRef.current) {
+            const max = Math.max(1, rightRef.current.scrollHeight - rightRef.current.clientHeight);
+            rightRef.current.scrollTop = ratio * max;
+          }
+        });
+      }
+    }
+  }, [viewMode, getScrollRatio, leftRef, rightRef]);
 
   // Group rows for collapsible unchanged sections if enabled
   const processedRows = useMemo(() => {

@@ -25,7 +25,7 @@ export const DEFAULT_DIFF_OPTIONS = {
   ignoreCase: false,
   ignorePunctuation: false,
   trimLines: false,
-  sortJsonKeys: true,
+  sortJsonKeys: false,
 };
 
 export const DEFAULT_SETTINGS = {

@@ -90,7 +90,7 @@ export function prepareText(text, options = {}) {
   let processed = text;
 
   if (options.diffType === DIFF_TYPES.JSON) {
-    processed = formatJsonString(processed, options.sortJsonKeys !== false);
+    processed = formatJsonString(processed, !!options.sortJsonKeys);
   }
 
   if (options.trimLines) {
@@ -418,14 +418,15 @@ export function computeDiff(originalRaw, modifiedRaw, options = {}) {
     }
   }
 
-  // Calculate similarity score (Dice coefficient based)
+  // Calculate similarity score (Dice coefficient based) with 1-decimal precision
   const totalOrig = oldLineNum - 1;
   const totalMod = newLineNum - 1;
   const totalComparedLines = totalOrig + totalMod;
-  const similarityScore =
+  const rawScore =
     totalComparedLines === 0
       ? 100
-      : Math.max(0, Math.min(100, Math.round(((unchanged * 2) / totalComparedLines) * 100)));
+      : ((unchanged * 2) / totalComparedLines) * 100;
+  const similarityScore = Math.max(0, Math.min(100, Math.round(rawScore * 10) / 10));
 
   return {
     splitRows,

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { Box, Typography, IconButton, Tooltip, Button } from '@mui/material';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
@@ -11,12 +11,46 @@ import { DIFF_SAMPLES } from '../../core/samples';
 import { CollapsedLines } from './CollapsedLines';
 
 export function UnifiedDiffView() {
-  const { originalText, modifiedText, diffResult, currentChangeIndex, searchQuery, setViewMode, loadSample } = useDiff();
+  const {
+    originalText,
+    modifiedText,
+    diffResult,
+    currentChangeIndex,
+    searchQuery,
+    setViewMode,
+    loadSample,
+    updateScrollRatio,
+    getScrollRatio,
+    viewMode,
+  } = useDiff();
   const { settings } = useSettings();
   const { copy } = useClipboard();
 
+  const unifiedRef = useRef(null);
   const [copiedLineId, setCopiedLineId] = useState(null);
   const [expandedHunks, setExpandedHunks] = useState({});
+
+  const handleScroll = () => {
+    if (unifiedRef.current && updateScrollRatio) {
+      const max = Math.max(1, unifiedRef.current.scrollHeight - unifiedRef.current.clientHeight);
+      updateScrollRatio(unifiedRef.current.scrollTop / max);
+    }
+  };
+
+  // Restore scroll position when view becomes active
+  useEffect(() => {
+    if (viewMode === VIEW_MODES.UNIFIED && unifiedRef.current) {
+      const ratio = getScrollRatio();
+      if (ratio > 0) {
+        requestAnimationFrame(() => {
+          if (unifiedRef.current) {
+            const max = Math.max(1, unifiedRef.current.scrollHeight - unifiedRef.current.clientHeight);
+            unifiedRef.current.scrollTop = ratio * max;
+          }
+        });
+      }
+    }
+  }, [viewMode, getScrollRatio]);
 
   // Group lines for collapsible unchanged sections
   const processedLines = useMemo(() => {
@@ -200,6 +234,8 @@ export function UnifiedDiffView() {
 
   return (
     <Box
+      ref={unifiedRef}
+      onScroll={handleScroll}
       sx={{
         height: '100%',
         width: '100%',

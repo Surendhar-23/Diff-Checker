@@ -8,7 +8,6 @@ import {
   TextField,
   InputAdornment,
   Checkbox,
-  FormControlLabel,
   Popover,
   Button,
   Divider,
@@ -59,11 +58,23 @@ export function DiffToolbar() {
     }
   };
 
+  const handleResetFilters = (e) => {
+    if (e) e.stopPropagation();
+    updateOption('ignoreWhitespace', false);
+    updateOption('ignoreCase', false);
+    updateOption('ignorePunctuation', false);
+    updateOption('trimLines', false);
+    if (options.diffType === DIFF_TYPES.JSON) {
+      updateOption('sortJsonKeys', false);
+    }
+  };
+
   const activeFiltersCount = [
     options.ignoreWhitespace,
     options.ignoreCase,
     options.ignorePunctuation,
     options.trimLines,
+    options.diffType === DIFF_TYPES.JSON && options.sortJsonKeys,
   ].filter(Boolean).length;
 
   return (
@@ -246,23 +257,25 @@ export function DiffToolbar() {
         )}
 
         {/* Filter / Normalization Options Popover */}
-        <Tooltip title="Comparison Filters (Ignore whitespace, case, punctuation)">
+        <Tooltip title="Comparison Rules (Ignore whitespace, case, punctuation, etc.)">
           <Button
             size="small"
             variant={activeFiltersCount > 0 ? 'contained' : 'outlined'}
             color={activeFiltersCount > 0 ? 'primary' : 'inherit'}
-            startIcon={<TuneRoundedIcon />}
+            startIcon={<TuneRoundedIcon sx={{ fontSize: 16 }} />}
             onClick={(e) => setFilterAnchor(e.currentTarget)}
             sx={{
               height: 32,
               fontSize: '0.78rem',
+              fontWeight: 600,
               borderColor: 'divider',
               boxShadow: 'none',
               borderRadius: '8px',
-              px: 1.2,
+              px: 1.3,
+              textTransform: 'none',
             }}
           >
-            Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}
+            Rules {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </Button>
         </Tooltip>
 
@@ -274,16 +287,19 @@ export function DiffToolbar() {
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
           PaperProps={{
             sx: {
-              p: 2,
-              width: 250,
-              borderRadius: 2,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+              py: 0.5,
+              width: 275,
+              borderRadius: 2.5,
+              boxShadow: '0 12px 32px rgba(0,0,0,0.22)',
+              border: '1px solid',
+              borderColor: 'divider',
+              overflow: 'hidden',
             },
           }}
         >
           {/* Mobile-only Diff Granularity Selector */}
-          <Box sx={{ display: { xs: 'block', sm: 'none' }, mb: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+          <Box sx={{ display: { xs: 'block', sm: 'none' }, px: 2, pt: 1.5, pb: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, fontSize: '0.8125rem' }}>
               Diff Granularity
             </Typography>
             <ToggleButtonGroup
@@ -318,66 +334,135 @@ export function DiffToolbar() {
             <Divider sx={{ my: 1.5 }} />
           </Box>
 
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-            Comparison Rules
-          </Typography>
-
-          <FormControlLabel
-            control={
-              <Checkbox
+          {/* Header */}
+          <Box
+            sx={{
+              px: 2,
+              py: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              mb: 0.5,
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8125rem' }}>
+              Comparison Rules
+            </Typography>
+            {activeFiltersCount > 0 && (
+              <Button
                 size="small"
-                checked={options.ignoreWhitespace}
-                onChange={(e) => updateOption('ignoreWhitespace', e.target.checked)}
-              />
-            }
-            label={<Typography variant="body2">Ignore Whitespace</Typography>}
-          />
+                onClick={handleResetFilters}
+                sx={{
+                  fontSize: '0.7rem',
+                  py: 0.1,
+                  px: 0.8,
+                  minWidth: 0,
+                  textTransform: 'none',
+                  color: 'primary.main',
+                  fontWeight: 600,
+                }}
+              >
+                Reset
+              </Button>
+            )}
+          </Box>
 
-          <FormControlLabel
-            control={
-              <Checkbox
-                size="small"
-                checked={options.ignoreCase}
-                onChange={(e) => updateOption('ignoreCase', e.target.checked)}
-              />
-            }
-            label={<Typography variant="body2">Ignore Case</Typography>}
-          />
-
-          <FormControlLabel
-            control={
-              <Checkbox
-                size="small"
-                checked={options.ignorePunctuation}
-                onChange={(e) => updateOption('ignorePunctuation', e.target.checked)}
-              />
-            }
-            label={<Typography variant="body2">Ignore Punctuation</Typography>}
-          />
-
-          <FormControlLabel
-            control={
-              <Checkbox
-                size="small"
-                checked={options.trimLines}
-                onChange={(e) => updateOption('trimLines', e.target.checked)}
-              />
-            }
-            label={<Typography variant="body2">Trim Trailing Spaces</Typography>}
-          />
-
-          {options.diffType === DIFF_TYPES.JSON && (
-            <FormControlLabel
-              control={
+          {/* Rules List */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', py: 0.5 }}>
+            {[
+              {
+                key: 'ignoreWhitespace',
+                label: 'Ignore Whitespace',
+                desc: 'Ignore difference in spaces & tabs',
+                checked: !!options.ignoreWhitespace,
+              },
+              {
+                key: 'ignoreCase',
+                label: 'Ignore Case',
+                desc: 'Case-insensitive match (A = a)',
+                checked: !!options.ignoreCase,
+              },
+              {
+                key: 'ignorePunctuation',
+                label: 'Ignore Punctuation',
+                desc: 'Strip symbols and punctuation',
+                checked: !!options.ignorePunctuation,
+              },
+              {
+                key: 'trimLines',
+                label: 'Trim Trailing Spaces',
+                desc: 'Ignore leading & trailing whitespace',
+                checked: !!options.trimLines,
+              },
+              ...(options.diffType === DIFF_TYPES.JSON
+                ? [
+                    {
+                      key: 'sortJsonKeys',
+                      label: 'Sort JSON Keys',
+                      desc: 'Deep alphabetical key sorting',
+                      checked: !!options.sortJsonKeys,
+                    },
+                  ]
+                : []),
+            ].map((item) => (
+              <Box
+                key={item.key}
+                onClick={() => updateOption(item.key, !item.checked)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  px: 2,
+                  py: 0.85,
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  transition: 'background-color 0.15s ease',
+                  '&:hover': { bgcolor: 'action.hover' },
+                }}
+              >
                 <Checkbox
                   size="small"
-                  checked={options.sortJsonKeys !== false}
-                  onChange={(e) => updateOption('sortJsonKeys', e.target.checked)}
+                  checked={item.checked}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    updateOption(item.key, e.target.checked);
+                  }}
+                  sx={{
+                    p: 0,
+                    mr: 1.25,
+                    mt: 0.15,
+                    '&.Mui-checked': { color: 'primary.main' },
+                  }}
                 />
-              }
-              label={<Typography variant="body2">Sort JSON Keys</Typography>}
-            />
-          )}
+                <Box sx={{ flexGrow: 1 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: '0.8125rem',
+                      fontWeight: item.checked ? 600 : 500,
+                      color: item.checked ? 'text.primary' : 'text.secondary',
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {item.label}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: '0.6875rem',
+                      color: 'text.disabled',
+                      display: 'block',
+                      lineHeight: 1.2,
+                      mt: 0.25,
+                    }}
+                  >
+                    {item.desc}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
         </Popover>
 
         {/* Quick In-diff Search Bar */}

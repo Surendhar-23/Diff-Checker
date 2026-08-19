@@ -10,9 +10,34 @@ export function DiffViewer() {
 
   return (
     <Box sx={{ flex: '1 1 auto', minHeight: 0, width: '100%', overflow: 'hidden', position: 'relative' }}>
-      {viewMode === VIEW_MODES.SPLIT && <SplitDiffView />}
-      {viewMode === VIEW_MODES.UNIFIED && <UnifiedDiffView />}
-      {viewMode === VIEW_MODES.EDITOR && <TextEditorPane />}
+      <Box
+        sx={{
+          display: viewMode === VIEW_MODES.SPLIT ? 'flex' : 'none',
+          flexDirection: 'column',
+          height: '100%',
+          width: '100%',
+        }}
+      >
+        <SplitDiffView />
+      </Box>
+      <Box
+        sx={{
+          display: viewMode === VIEW_MODES.UNIFIED ? 'block' : 'none',
+          height: '100%',
+          width: '100%',
+        }}
+      >
+        <UnifiedDiffView />
+      </Box>
+      <Box
+        sx={{
+          display: viewMode === VIEW_MODES.EDITOR ? 'block' : 'none',
+          height: '100%',
+          width: '100%',
+        }}
+      >
+        <TextEditorPane />
+      </Box>
     </Box>
   );
 }
